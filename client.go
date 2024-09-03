@@ -2,6 +2,7 @@ package aws_ecs_describer
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -28,10 +29,10 @@ func Cluster(region, name string) (*ECSCluster, error) {
 	}, nil
 }
 
-func (cluster *ECSCluster) GetClusterDescription() (map[string]interface{}, error) {
+func (cluster *ECSCluster) GetClusterDescription() (string, error) {
 	svc, err := svcCreator(cluster.region)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 
 	// Get all services from cluster:
@@ -41,10 +42,10 @@ func (cluster *ECSCluster) GetClusterDescription() (map[string]interface{}, erro
 
 	services, err := svc.ListServices(context.TODO(), listServicesInput)
 	if err != nil {
-		return nil, fmt.Errorf("unable to list services: %w", err)
+		return "", fmt.Errorf("unable to list services: %w", err)
 	}
 
-	// Services was found
+	// Services were found
 	outputMap := make(map[string]interface{})
 	if len(services.ServiceArns) > 0 {
 		describeServicesInput := &ecs.DescribeServicesInput{
@@ -54,23 +55,28 @@ func (cluster *ECSCluster) GetClusterDescription() (map[string]interface{}, erro
 
 		describedServices, err := svc.DescribeServices(context.TODO(), describeServicesInput)
 		if err != nil {
-			return nil, fmt.Errorf("unable to describe services: %w", err)
+			return "", fmt.Errorf("unable to describe services: %w", err)
 		}
 
 		for _, service := range describedServices.Services {
 			// Getting task description
 			tasks, err := describeTasks(svc, cluster.name, service.ServiceName)
 			if err != nil {
-				log.Fatalf("Failed to describe tasks: %v", err)
+				log.Printf("Failed to describe tasks: %v", err)
 				continue
 			}
 			outputMap[*service.ServiceName] = tasks
 		}
 
-		return outputMap, nil
+		// Convert the output map to JSON
+		outputJSON, err := json.MarshalIndent(outputMap, "", "  ")
+		if err != nil {
+			return "", fmt.Errorf("failed to marshal output map to JSON: %w", err)
+		}
+		return string(outputJSON), nil
 	}
 
-	return outputMap, fmt.Errorf("Unexpected error")
+	return "", fmt.Errorf("no services found")
 }
 
 func svcCreator(awsRegion string) (*ecs.Client, error) {

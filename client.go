@@ -109,6 +109,7 @@ func describeTasks(svc *ecs.Client, clusterName string, serviceName *string) ([]
 			Tasks:   tasks.TaskArns,
 		}
 
+		// Get task description
 		describedTasks, err := svc.DescribeTasks(context.TODO(), describeTasksInput)
 		if err != nil {
 			return nil, fmt.Errorf("unable to describe tasks: %w", err)

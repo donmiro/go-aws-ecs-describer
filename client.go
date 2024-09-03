@@ -63,7 +63,7 @@ func (cluster *ECSCluster) GetClusterDescription() (map[string]interface{}, erro
 				log.Fatalf("Failed to describe tasks: %v", err)
 				continue
 			}
-			outputMap[service.ServiceName] = tasks
+			outputMap[*service.ServiceName] = tasks
 		}
 
 		return outputMap, nil

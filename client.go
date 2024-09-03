@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
+	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
 )
 
 type ECSCluster struct {
@@ -84,7 +85,7 @@ func svcCreator(awsRegion string) (*ecs.Client, error) {
 	return svc, nil
 }
 
-func describeTasks(svc *ecs.Client, clusterName string, serviceName *string) ([]ecs.Task, error) {
+func describeTasks(svc *ecs.Client, clusterName string, serviceName *string) ([]types.Task, error) {
 	// Get all tasks for each service
 	listTasksInput := &ecs.ListTasksInput{
 		Cluster:     aws.String(clusterName),
@@ -110,5 +111,5 @@ func describeTasks(svc *ecs.Client, clusterName string, serviceName *string) ([]
 		return describedTasks.Tasks, nil
 	}
 
-	return []ecs.Task{}, nil
+	return []types.Task{}, nil
 }
